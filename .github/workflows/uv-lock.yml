@@ -1,0 +1,45 @@
+name: Refresh uv lockfile
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - pyproject.toml
+      - .github/workflows/uv-lock.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: uv-lock-dev
+  cancel-in-progress: false
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Resolve dependencies
+        run: uv lock
+
+      - name: Commit lockfile
+        run: |
+          if [ -z "$(git status --porcelain -- uv.lock)" ]; then
+            echo "uv.lock is already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add uv.lock
+          git commit -m "chore: refresh uv.lock [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}

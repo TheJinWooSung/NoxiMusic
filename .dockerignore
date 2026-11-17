@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.git
+.venv
+venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+downloads
+cache
+playback
+logs
+noxy/cookies/*.txt
+noxy/cookies/*.tmp

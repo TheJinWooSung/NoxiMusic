@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=77.0.0", "wheel>=0.45.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "noximusic"
+version = "1.0.0"
+description = "NoxiMusic — a fast Telegram group voice-chat music bot"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = ["telegram", "music", "bot", "voice-chat", "pytgcalls", "ntgcalls"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: AsyncIO",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Communications :: Chat",
+]
+
+dependencies = [
+    "kurigram[fast]>=2.2.27,<3.0.0",
+    "py-tgcalls>=3.0.1,<4.0.0",
+    "ntgcalls>=3.0.7,<4.0.0",
+    "py-yt-search>=0.8.2,<0.9.0",
+    "yt-dlp[default]>=2026.10.26",
+    "pydantic>=2.14.0,<3.0.0",
+    "pydantic-settings>=2.16.0,<3.0.0",
+    "pymongo>=4.20.0,<5.0.0",
+    "aiohttp[speedups]>=3.14.0,<4.0.0",
+    "Pillow==13.0.0",
+    "psutil>=6.0.0",
+    "unidecode>=1.3.8",
+    "pytgcrypto",
+]
+
+[project.optional-dependencies]
+aria = ["yt-dlp[default]"]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.9.0",
+]
+
+[project.scripts]
+noximusic = "noxy.__main__:run"
+
+[project.urls]
+Homepage = "https://github.com/TheJinWooSung/NoxiMusic"
+Issues = "https://github.com/TheJinWooSung/NoxiMusic/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["noxy*"]
+
+[tool.setuptools.package-data]
+noxy = ["locales/*.json", "cookies/readme.md"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["."]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "ASYNC", "RUF"]
+ignore = [
+    "E501",
+    "B008",
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "ASYNC240",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["noxy"]
+
+[tool.ruff.lint.per-file-ignores]
+"noxy/__init__.py" = ["E402"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
