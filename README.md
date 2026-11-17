@@ -13,9 +13,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/TheJinWooSung/NoxiMusic">Repository</a> ·
-  <a href="https://github.com/TheJinWooSung/NoxiMusic/issues">Issues</a> ·
-  <a href="https://github.com/TheJinWooSung/NoxiMusic/stargazers">Stars</a>
+  <a href="https://github.com/eldiankai/NoxiMusic">Repository</a> ·
+  <a href="https://github.com/eldiankai/NoxiMusic/issues">Issues</a> ·
+  <a href="https://github.com/eldiankai/NoxiMusic/stargazers">Stars</a>
 </p>
 
 ## Overview
@@ -49,7 +49,7 @@ NoxiMusic plays music and video in Telegram group voice chats. It combines a Tel
 Clone the repository and create your environment file:
 
 ```bash
-git clone https://github.com/TheJinWooSung/NoxiMusic.git
+git clone https://github.com/eldiankai/NoxiMusic.git
 cd NoxiMusic
 cp .env.example .env
 ```
