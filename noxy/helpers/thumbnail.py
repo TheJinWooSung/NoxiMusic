@@ -36,15 +36,17 @@ def _video_id(value: str | None) -> str | None:
         return value
     parsed = urlparse(value)
     host = (parsed.hostname or "").lower()
-    if host.endswith("youtu.be"):
+    if host == "youtu.be" or host.endswith(".youtu.be"):
         candidate = parsed.path.strip("/").split("/", 1)[0]
         return candidate if VIDEO_ID.fullmatch(candidate) else None
-    if host.endswith("youtube.com"):
+    if host == "youtube.com" or host.endswith(".youtube.com"):
         candidate = (parse_qs(parsed.query).get("v") or [""])[0]
         if not candidate:
             parts = parsed.path.strip("/").split("/")
             candidate = parts[1] if len(parts) > 1 and parts[0] in {"shorts", "embed", "live"} else ""
         return candidate if VIDEO_ID.fullmatch(candidate) else None
+    if host:
+        return None
     match = VIDEO_ID_SEARCH.search(value)
     return match.group(1) if match else None
 
