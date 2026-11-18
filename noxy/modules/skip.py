@@ -170,7 +170,7 @@ async def skip(cli, message: Message, chat_id):
 
         if await _bulk_skip(message, chat_id, requested):
             return None
-        return await _skip_current(message, chat_id)
+        return await _start_next(message, chat_id)
 
 
 async def _start_next(
