@@ -173,14 +173,32 @@ async def skip(cli, message: Message, chat_id):
         return await _skip_current(message, chat_id)
 
 
-async def _skip_current(message: Message, chat_id: int) -> None:
+async def _start_next(
+    message: Message,
+    chat_id: int,
+    *,
+    remove_current: bool = False,
+) -> None:
     queue = db.get(chat_id) or []
-    if not queue:
-        return await message.reply_text(get_text("skip.empty_queue"))
+    index = 1 if remove_current else 0
+    if len(queue) <= index:
+        if remove_current and queue:
+            finished = queue.pop(0)
+            await auto_clean(finished)
+        await noxy.stop_stream_force(chat_id)
+        return await message.reply_text(
+            get_text(
+                "skip.skipped_by",
+                user=message.from_user.mention,
+                chat=message.chat.title,
+            ),
+            reply_markup=close_markup(),
+        )
 
-    track = _skipped_entry(queue[0])
-    db[chat_id][0]["played"] = 0
-    _reset_speed_state(db[chat_id][0])
+    entry = queue[index]
+    track = _skipped_entry(entry)
+    entry.played = 0
+    _reset_speed_state(entry)
 
     mystic = None
     if track.source_kind == "vid":
@@ -189,14 +207,24 @@ async def _skip_current(message: Message, chat_id: int) -> None:
         )
 
     try:
-        await _switch(chat_id, track, mystic)
+        switched = await _switch(chat_id, track, mystic)
+        if not switched:
+            raise RuntimeError("The next track could not be prepared.")
     except Exception:
         LOGGER.exception("Failed to switch to the next track in %s", chat_id)
         target = mystic or message
-        return await target.edit_text(get_text("skip.switch_failed"))
+        await target.edit_text(get_text("skip.switch_failed"))
+        return
+
+    if remove_current:
+        finished = queue.pop(0)
+        await auto_clean(finished)
 
     await _post_now_playing(message, chat_id, track)
     if mystic is not None:
         with contextlib.suppress(Exception):
             await mystic.delete()
-    return None
+
+
+async def _skip_current(message: Message, chat_id: int) -> None:
+    await _start_next(message, chat_id, remove_current=True)
