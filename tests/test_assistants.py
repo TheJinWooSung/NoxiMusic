@@ -60,3 +60,34 @@ async def test_group_assistant_reassigns_when_slot_is_missing(fake_assistants, m
 
 def test_call_for_returns_none_for_missing_slot():
     assert _call_for(None) is None
+
+
+@pytest.mark.asyncio
+async def test_group_assistant_fails_over_from_unstarted_slot(
+    fake_assistants, monkeypatch
+):
+    from noxy.database import assistant_map
+
+    updates = []
+
+    async def fake_lookup(*args, **kwargs):
+        return None
+
+    async def fake_update(*args, **kwargs):
+        updates.append((args, kwargs))
+
+    async def fake_set_assistant(chat_id, number=None):
+        assistant_map.set(chat_id, 4)
+        return None
+
+    monkeypatch.setattr(
+        models, "assdb", SimpleNamespace(find_one=fake_lookup, update_one=fake_update)
+    )
+    monkeypatch.setattr(models, "set_assistant", fake_set_assistant)
+    monkeypatch.setattr(
+        models, "_call_for", lambda slot: "call-2" if slot == 2 else None
+    )
+
+    assert await group_assistant(object(), -502) == "call-2"
+    assert assistant_map.get(-502) == 2
+    assert updates
