@@ -39,7 +39,8 @@ class CallBase:
         return await group_assistant(self, chat_id)
 
     def for_slot(self, slot: int) -> PyTgCalls | None:
-        return self._by_slot.get(int(slot))
+        client = self._by_slot.get(int(slot))
+        return client if client in self._started else None
 
     @staticmethod
     def _bot():
