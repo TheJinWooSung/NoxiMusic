@@ -62,3 +62,14 @@ async def test_clear_resets_queue_and_chat_state(monkeypatch):
     assert chat_id not in engine._consecutive_failures
     remove_video.assert_awaited_once_with(chat_id)
     remove_active.assert_awaited_once_with(chat_id)
+
+
+def test_for_slot_returns_only_started_clients():
+    engine = Call()
+    client = object()
+    engine._by_slot[2] = client
+
+    assert engine.for_slot(2) is None
+
+    engine._started.append(client)
+    assert engine.for_slot(2) is client
