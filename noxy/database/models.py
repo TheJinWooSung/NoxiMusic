@@ -169,9 +169,19 @@ async def group_assistant(number: int, chat_id: int):
     await set_assistant(chat_id)
     chosen = assistant_map.get(chat_id)
     call_client = _call_for(chosen)
-    if call_client is None:
-        raise RuntimeError("No PyTgCalls client is available for this assistant.")
-    return call_client
+    if call_client is not None:
+        return call_client
+
+    call_slots = [slot for slot in available if _call_for(slot) is not None]
+    if not call_slots:
+        raise RuntimeError("No started PyTgCalls client is available.")
+
+    chosen = random.choice(call_slots)
+    assistant_map.set(chat_id, chosen)
+    await assdb.update_one(
+        {"chat_id": chat_id}, {"$set": {"assistant": chosen}}, upsert=True
+    )
+    return _call_for(chosen)
 
 
 async def get_loop(chat_id: int) -> int:
