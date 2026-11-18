@@ -50,7 +50,7 @@ dev = [
 noximusic = "noxy.__main__:run"
 
 [project.urls]
-Homepage = "https://github.com/TheJinWooSung/NoxiMusic"
+Homepage = "https://github.com/eldiankai/NoxiMusic"
 Issues = "https://github.com/TheJinWooSung/NoxiMusic/issues"
 
 [tool.setuptools]

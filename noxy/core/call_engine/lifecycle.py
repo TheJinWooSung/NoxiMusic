@@ -37,17 +37,32 @@ class CallLifecycleMixin:
             for (session, call), client in zip(self.calls, userbot.clients, strict=False)
             if session
         ]
-        results = await asyncio.gather(
-            *(_start_one(session, call) for session, call in pairs),
-            return_exceptions=True,
-        )
+        try:
+            results = await asyncio.gather(
+                *(_start_one(session, call) for session, call in pairs),
+                return_exceptions=True,
+            )
+        except asyncio.CancelledError:
+            await asyncio.gather(
+                *(call.stop() for _, call in pairs),
+                return_exceptions=True,
+            )
+            self._started.clear()
+            self.calls = ()
+            self._by_slot.clear()
+            raise
+
         for (_session, call), result in zip(pairs, results, strict=False):
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 LOGGER.error("Voice-call client failed to start: %s", result)
+                with contextlib.suppress(Exception):
+                    await call.stop()
                 continue
             self._started.append(call)
 
         if not self._started:
+            self.calls = ()
+            self._by_slot.clear()
             raise RuntimeError("No PyTgCalls client could be started.")
 
         if AUTO_LEAVING_ASSISTANT and (

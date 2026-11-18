@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import inspect
 import logging
 import signal
 import sys
@@ -33,24 +34,28 @@ def configure_logging(level: str = "INFO") -> None:
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
-def load_modules() -> int:
+async def load_modules() -> int:
     loaded = 0
+    failures: list[str] = []
+
     for module in ALL_MODULES:
         try:
             loaded_module = importlib.import_module(f"noxy.modules{module}")
+            starter = getattr(loaded_module, "start_background_tasks", None)
+            if callable(starter):
+                result = starter()
+                if inspect.isawaitable(result):
+                    await result
         except Exception:
-            LOGGER.exception("Failed to load module %s", module)
+            failures.append(module)
+            LOGGER.exception("Failed to load or initialize module %s", module)
             continue
         loaded += 1
 
-        starter = getattr(loaded_module, "start_background_tasks", None)
-        if callable(starter):
-            try:
-                starter()
-            except Exception:
-                LOGGER.exception("Could not start background tasks for %s", module)
-
     LOGGER.info("Loaded %d/%d command modules.", loaded, len(ALL_MODULES))
+    if failures:
+        failed = ", ".join(failures)
+        raise RuntimeError(f"Failed to load required command modules: {failed}")
     return loaded
 
 
@@ -82,8 +87,11 @@ async def main() -> None:
 
         from noxy import app, userbot
 
-        await asyncio.gather(app.start(), userbot.start())
-        started.extend(["userbot", "bot"])
+        started.append("bot")
+        await app.start()
+
+        started.append("userbot")
+        await userbot.start()
 
         await _announce(app, "startup.bot_started", f"@{app.username}" if app.username else app.mention)
         for _slot, client in userbot.started:
@@ -93,10 +101,10 @@ async def main() -> None:
                 f"@{client.username}" if client.username else client.mention,
             )
 
+        started.append("calls")
         await noxy.start()
-        started.insert(0, "calls")
 
-        load_modules()
+        await load_modules()
         await noxy.decorators()
 
         LOGGER.info(
@@ -137,7 +145,7 @@ async def _shutdown(started: list[str]) -> None:
 async def _safe(func, label: str) -> None:
     try:
         result = func()
-        if asyncio.iscoroutine(result):
+        if inspect.isawaitable(result):
             await result
     except Exception:
         LOGGER.exception("Failed to stop %s cleanly.", label)
