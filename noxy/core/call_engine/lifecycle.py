@@ -80,8 +80,11 @@ class CallLifecycleMixin:
                 await self._auto_leave_task
             self._auto_leave_task = None
 
-        for task in list(self._prefetch_tasks.values()):
+        prefetch_tasks = list(self._prefetch_tasks.values())
+        for task in prefetch_tasks:
             task.cancel()
+        if prefetch_tasks:
+            await asyncio.gather(*prefetch_tasks, return_exceptions=True)
         self._prefetch_tasks.clear()
         self._autoend.clear()
 
